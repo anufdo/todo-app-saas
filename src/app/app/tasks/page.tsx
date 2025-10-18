@@ -2,6 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { getTasks, createTask, deleteTask, toggleTaskCompletion } from "@/app/actions/task";
+import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 
 export default function TasksPage() {
   interface Task {
@@ -115,98 +120,92 @@ export default function TasksPage() {
       )}
 
       {/* Create Task Form */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-lg font-semibold mb-4">Create New Task</h2>
-        <form onSubmit={handleCreateTask} className="space-y-4">
-          <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-              Task Title
-            </label>
-            <input
-              type="text"
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter task title"
-            />
-          </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Create New Task</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleCreateTask} className="space-y-4">
+            <div>
+              <Label htmlFor="title">Task Title</Label>
+              <Input
+                type="text"
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Enter task title"
+              />
+            </div>
 
-          <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-              Description (Optional)
-            </label>
-            <textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter task description"
-              rows={3}
-            />
-          </div>
+            <div>
+              <Label htmlFor="description">Description (Optional)</Label>
+              <Textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Enter task description"
+                rows={3}
+              />
+            </div>
 
-          <button
-            type="submit"
-            className="bg-blue-600 text-white font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Create Task
-          </button>
-        </form>
-      </div>
+            <Button type="submit">Create Task</Button>
+          </form>
+        </CardContent>
+      </Card>
 
       {/* Tasks List */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <h2 className="text-lg font-semibold px-6 py-4 border-b border-gray-200">
-          Your Tasks ({tasks.length})
-        </h2>
-
-        {loading ? (
-          <div className="px-6 py-8 text-center text-gray-500">Loading tasks...</div>
-        ) : tasks.length === 0 ? (
-          <div className="px-6 py-8 text-center text-gray-500">No tasks yet. Create your first task above!</div>
-        ) : (
-          <div className="divide-y divide-gray-200">
-            {tasks.map((task) => (
-              <div key={task.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start flex-1">
-                    <input
-                      type="checkbox"
-                      checked={task.completed}
-                      onChange={() => handleToggleTask(task.id)}
-                      className="mt-1 mr-3 w-4 h-4 cursor-pointer"
-                    />
-                    <div className="flex-1">
-                      <h3
-                        className={`font-medium ${
-                          task.completed ? "line-through text-gray-400" : "text-gray-900"
-                        }`}
-                      >
-                        {task.title}
-                      </h3>
-                      {task.description && (
-                        <p className="text-sm text-gray-600 mt-1">{task.description}</p>
-                      )}
-                      {task.creator && (
-                        <p className="text-xs text-gray-500 mt-2">
-                          Created by {task.creator.name || task.creator.email}
-                        </p>
-                      )}
+      <Card className="overflow-hidden">
+        <CardHeader className="border-b">
+          <CardTitle>Your Tasks ({tasks.length})</CardTitle>
+        </CardHeader>
+        <div>
+          {loading ? (
+            <div className="px-6 py-8 text-center text-gray-500">Loading tasks...</div>
+          ) : tasks.length === 0 ? (
+            <div className="px-6 py-8 text-center text-gray-500">No tasks yet. Create your first task above!</div>
+          ) : (
+            <div className="divide-y divide-gray-200">
+              {tasks.map((task) => (
+                <div key={task.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start flex-1">
+                      <input
+                        type="checkbox"
+                        checked={task.completed}
+                        onChange={() => handleToggleTask(task.id)}
+                        className="mt-1 mr-3 w-4 h-4 cursor-pointer"
+                      />
+                      <div className="flex-1">
+                        <h3
+                          className={`font-medium ${
+                            task.completed ? "line-through text-gray-400" : "text-gray-900"
+                          }`}
+                        >
+                          {task.title}
+                        </h3>
+                        {task.description && (
+                          <p className="text-sm text-gray-600 mt-1">{task.description}</p>
+                        )}
+                        {task.creator && (
+                          <p className="text-xs text-gray-500 mt-2">
+                            Created by {task.creator.name || task.creator.email}
+                          </p>
+                        )}
+                      </div>
                     </div>
+                    <button
+                      onClick={() => handleDeleteTask(task.id)}
+                      className="ml-4 text-red-600 hover:text-red-800 text-sm font-medium"
+                    >
+                      Delete
+                    </button>
                   </div>
-                  <button
-                    onClick={() => handleDeleteTask(task.id)}
-                    className="ml-4 text-red-600 hover:text-red-800 text-sm font-medium"
-                  >
-                    Delete
-                  </button>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </Card>
     </div>
   );
 }

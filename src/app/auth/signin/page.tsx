@@ -4,6 +4,10 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Card, CardHeader, CardContent, CardTitle, CardFooter } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -39,9 +43,12 @@ export default function SignInPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <h1 className="text-2xl font-bold text-center mb-2">Todo SaaS</h1>
-          <p className="text-gray-600 text-center mb-8">Sign in to your account</p>
+        <Card>
+          <CardHeader className="text-center">
+            <CardTitle>Todo SaaS</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">Sign in to your account</p>
 
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
@@ -49,63 +56,52 @@ export default function SignInPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="you@example.com"
-                required
-              />
-            </div>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  type="email"
+                  id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                />
+              </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                Password
-              </label>
-              <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="••••••••"
-                required
-              />
-            </div>
+              <div>
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  type="password"
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 text-white font-medium py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
-            >
-              {loading ? "Signing in..." : "Sign In"}
-            </button>
-          </form>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Signing in..." : "Sign In"}
+              </Button>
+            </form>
 
-          <div className="mt-6">
-            <p className="text-center text-gray-600 text-sm">
-              Don&apos;t have an account?{" "}
-              <Link href="/auth/signup" className="text-blue-600 hover:underline">
+            <div className="mt-4 text-center text-sm">
+              {"Don't have an account? "}
+              <Link href="/auth/signup" className="underline text-primary">
                 Sign up
               </Link>
-            </p>
-          </div>
+            </div>
 
-          <div className="mt-6 pt-6 border-t border-gray-200">
+          </CardContent>
+          <CardFooter className="flex flex-col items-center">
             <p className="text-center text-gray-600 text-sm mb-3">Demo Credentials</p>
             <div className="bg-gray-50 p-3 rounded text-sm text-gray-700 space-y-1">
               <p>Email: <code className="font-mono">demo@example.com</code></p>
               <p>Password: <code className="font-mono">password123</code></p>
             </div>
-          </div>
-        </div>
+          </CardFooter>
+        </Card>
       </div>
     </div>
   );
