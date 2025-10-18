@@ -7,6 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { PlanBadge } from "@/components/PlanBadge";
+import { UpgradeCta } from "@/components/UpgradeCta";
+import type { Plan } from "@/types";
 
 export default function TasksPage() {
   interface Task {
@@ -23,6 +26,11 @@ export default function TasksPage() {
   const [description, setDescription] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [plan, setPlan] = useState<Plan>("free");
+  const [taskCount, setTaskCount] = useState(0);
+  const [taskLimit, setTaskLimit] = useState(0);
+
+  const reachedLimit = taskLimit > 0 && taskCount >= taskLimit;
 
   useEffect(() => {
     loadTasks();
@@ -35,7 +43,20 @@ export default function TasksPage() {
       if (result.error) {
         setError(result.error);
       } else {
+        setError("");
         setTasks(result.tasks || []);
+        const planFromServer = (result.plan as Plan) || "free";
+        setPlan(planFromServer);
+        if (typeof result.taskCount === "number") {
+          setTaskCount(result.taskCount);
+        } else {
+          setTaskCount((result.tasks || []).length);
+        }
+        if (typeof result.taskLimit === "number") {
+          setTaskLimit(result.taskLimit);
+        } else {
+          setTaskLimit(0);
+        }
       }
     } catch (err: unknown) {
       setError("Failed to load tasks");
@@ -105,7 +126,10 @@ export default function TasksPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-bold">Tasks</h1>
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="text-3xl font-bold">Tasks</h1>
+        <PlanBadge plan={plan} />
+      </div>
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
@@ -119,7 +143,8 @@ export default function TasksPage() {
         </div>
       )}
 
-      {/* Create Task Form */}
+      <UpgradeCta plan={plan} taskCount={taskCount} taskLimit={taskLimit} />
+
       <Card>
         <CardHeader>
           <CardTitle>Create New Task</CardTitle>
@@ -148,7 +173,15 @@ export default function TasksPage() {
               />
             </div>
 
-            <Button type="submit">Create Task</Button>
+            {reachedLimit && (
+              <p className="text-sm text-red-600">
+                You have reached the task limit for the {plan === "free" ? "Free" : "current"} plan.
+              </p>
+            )}
+
+            <Button type="submit" disabled={reachedLimit}>
+              {reachedLimit ? "Upgrade to add more tasks" : "Create Task"}
+            </Button>
           </form>
         </CardContent>
       </Card>
@@ -156,7 +189,7 @@ export default function TasksPage() {
       {/* Tasks List */}
       <Card className="overflow-hidden">
         <CardHeader className="border-b">
-          <CardTitle>Your Tasks ({tasks.length})</CardTitle>
+          <CardTitle>Your Tasks ({taskCount})</CardTitle>
         </CardHeader>
         <div>
           {loading ? (

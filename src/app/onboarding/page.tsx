@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { createTenant } from "@/app/actions/tenant";
 
 export default function OnboardingPage() {
+  const { data: session } = useSession();
   const [name, setName] = useState("");
   const [subdomain, setSubdomain] = useState("");
   const [error, setError] = useState("");
@@ -15,15 +17,25 @@ export default function OnboardingPage() {
     setLoading(true);
 
     try {
-      const result = await createTenant({ name, subdomain });
+  const userId = session?.user?.id ?? null;
+  const result = await createTenant({ name, subdomain, userId });
 
       if (result.error) {
         setError(result.error);
       } else if (result.success && result.tenant) {
-        // Redirect to the new tenant subdomain
-        const protocol = window.location.protocol;
-        const newUrl = `${protocol}//${result.tenant.subdomain}.${window.location.host}/app/tasks`;
-        window.location.href = newUrl;
+        // Redirect to the new tenant
+        const isLocalhost = window.location.hostname === "localhost" || 
+                           window.location.hostname === "127.0.0.1";
+        
+        if (isLocalhost) {
+          // For localhost, use query parameter
+          window.location.href = `/app/tasks?tenant=${result.tenant.subdomain}`;
+        } else {
+          // For production, use subdomain
+          const protocol = window.location.protocol;
+          const newUrl = `${protocol}//${result.tenant.subdomain}.${window.location.host}/app/tasks`;
+          window.location.href = newUrl;
+        }
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to create workspace";

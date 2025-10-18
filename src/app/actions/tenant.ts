@@ -1,17 +1,13 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { CreateTenantSchema } from "@/lib/validations";
-import { headers } from "next/headers";
+import { CreateTenantSchema, CreateTenantInput } from "@/lib/validations";
 
-export async function createTenant(input: unknown) {
+export async function createTenant(input: CreateTenantInput & { userId: string | null }) {
   try {
-    // Validate input
-    const data = CreateTenantSchema.parse(input);
-
-    // This would normally use NextAuth session, but for now we get it from headers
-    const headersList = await headers();
-    const userId = headersList.get("x-user-id");
+    // Destructure and validate
+    const { name, subdomain, userId } = input;
+    const data = CreateTenantSchema.parse({ name, subdomain });
 
     if (!userId) {
       return { error: "Not authenticated" };

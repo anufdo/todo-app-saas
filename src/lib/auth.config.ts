@@ -46,6 +46,20 @@ export const authConfig = {
     error: "/auth/error",
   },
   callbacks: {
+    async jwt({ token, user }) {
+      // Add user id to the token on sign in
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      // Add user id to the session
+      if (token && session.user) {
+        session.user.id = token.id as string;
+      }
+      return session;
+    },
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       const isOnAuth = nextUrl.pathname.startsWith("/auth");

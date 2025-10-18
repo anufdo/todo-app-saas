@@ -1,3 +1,28 @@
+// NextAuth type extensions
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      email: string;
+      name?: string | null;
+      image?: string | null;
+    };
+  }
+
+  interface User {
+    id: string;
+    email: string;
+    name?: string | null;
+    image?: string | null;
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    id: string;
+  }
+}
+
 export type Plan = "free" | "premium" | "premium_plus";
 export type Role = "owner" | "admin" | "member";
 export type TeamRole = "manager" | "member";

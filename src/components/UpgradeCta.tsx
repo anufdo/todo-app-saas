@@ -7,12 +7,12 @@ interface UpgradeCtaProps {
 }
 
 export function UpgradeCta({ plan, taskCount, taskLimit }: UpgradeCtaProps) {
-  const percentageUsed = Math.round((taskCount / taskLimit) * 100);
-  const canUpgrade = plan === "free" || plan === "premium";
-
-  if (plan === "premium_plus" || taskLimit === -1) {
-    return null; // No limit for premium_plus
+  if (plan === "premium_plus" || taskLimit <= 0) {
+    return null; // Unlimited or undefined limits shouldn't render CTA
   }
+
+  const canUpgrade = plan === "free" || plan === "premium";
+  const percentageUsed = Math.round((taskCount / taskLimit) * 100);
 
   return (
     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

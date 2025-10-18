@@ -3,40 +3,45 @@
 import { db } from "@/lib/db";
 import { setTenantContext, clearTenantContext } from "@/lib/tenant";
 import { CreateTaskSchema, UpdateTaskSchema } from "@/lib/validations";
-import { getTasksLimit } from "@/types";
+import { getTasksLimit, type Plan } from "@/types";
 import { headers } from "next/headers";
 
 /**
  * Create a new task
  */
 export async function createTask(input: unknown) {
+  const headersList = await headers();
+  const tenantId = headersList.get("x-tenant-id");
+  const plan = (headersList.get("x-plan") || "free") as Plan;
+  const userId = headersList.get("x-user-id");
+
+  if (!tenantId || !userId) {
+    return { error: "Not authorized" };
+  }
+
   try {
-    // Validate input
     const data = CreateTaskSchema.parse(input);
 
-    // Get tenant context from headers
-    const headersList = await headers();
-    const tenantId = headersList.get("x-tenant-id");
-    const plan = (headersList.get("x-plan") || "free") as "free" | "premium" | "premium_plus";
-    const userId = headersList.get("x-user-id");
-
-    if (!tenantId || !userId) {
-      return { error: "Not authorized" };
-    }
-
-    // Check task limit
-    const usage = await db.usageCounter.findUnique({
+    let usage = await db.usageCounter.findUnique({
       where: { tenantId },
     });
 
+    if (!usage) {
+      usage = await db.usageCounter.create({
+        data: {
+          tenantId,
+          taskCount: 0,
+        },
+      });
+    }
+
     const limit = getTasksLimit(plan);
-    if (limit > 0 && usage && usage.taskCount >= limit) {
+    if (limit > 0 && usage.taskCount >= limit) {
       return { error: `Task limit reached (${limit} tasks)` };
     }
 
     setTenantContext(tenantId);
 
-    // Create task
     const task = await db.task.create({
       data: {
         tenantId,
@@ -48,15 +53,11 @@ export async function createTask(input: unknown) {
       },
     });
 
-    // Update usage counter
-    if (usage) {
-      await db.usageCounter.update({
-        where: { tenantId },
-        data: { taskCount: { increment: 1 } },
-      });
-    }
+    await db.usageCounter.update({
+      where: { tenantId },
+      data: { taskCount: { increment: 1 } },
+    });
 
-    // Log activity
     await db.taskActivity.create({
       data: {
         tenantId,
@@ -67,13 +68,13 @@ export async function createTask(input: unknown) {
       },
     });
 
-    clearTenantContext();
     return { success: true, task };
   } catch (error: unknown) {
-    clearTenantContext();
     const errorMessage = error instanceof Error ? error.message : "Failed to create task";
     console.error("Create task error:", error);
     return { error: errorMessage };
+  } finally {
+    clearTenantContext();
   }
 }
 
@@ -81,32 +82,47 @@ export async function createTask(input: unknown) {
  * Get all tasks for current tenant
  */
 export async function getTasks() {
+  const headersList = await headers();
+  const tenantId = headersList.get("x-tenant-id");
+  const plan = (headersList.get("x-plan") || "free") as Plan;
+
+  if (!tenantId) {
+    return { error: "Not authorized" };
+  }
+
+  setTenantContext(tenantId);
+
   try {
-    const headersList = await headers();
-    const tenantId = headersList.get("x-tenant-id");
+    const [tasks, usage] = await Promise.all([
+      db.task.findMany({
+        where: { tenantId },
+        include: {
+          creator: { select: { id: true, name: true, email: true } },
+          team: { select: { id: true, name: true } },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+      db.usageCounter.findUnique({
+        where: { tenantId },
+      }),
+    ]);
 
-    if (!tenantId) {
-      return { error: "Not authorized" };
-    }
+    const taskCount = usage?.taskCount ?? 0;
+    const taskLimit = getTasksLimit(plan);
 
-    setTenantContext(tenantId);
-
-    const tasks = await db.task.findMany({
-      where: { tenantId },
-      include: {
-        creator: { select: { id: true, name: true, email: true } },
-        team: { select: { id: true, name: true } },
-      },
-      orderBy: { createdAt: "desc" },
-    });
-
-    clearTenantContext();
-    return { success: true, tasks };
+    return {
+      success: true,
+      tasks,
+      taskCount,
+      taskLimit,
+      plan,
+    };
   } catch (error: unknown) {
-    clearTenantContext();
     console.error("Get tasks error:", error);
     const msg = error instanceof Error ? error.message : "Failed to fetch tasks";
     return { error: msg };
+  } finally {
+    clearTenantContext();
   }
 }
 
@@ -133,7 +149,6 @@ export async function updateTask(taskId: string, input: unknown) {
     });
 
     if (!existingTask || existingTask.tenantId !== tenantId) {
-      clearTenantContext();
       return { error: "Task not found" };
     }
 
@@ -154,13 +169,13 @@ export async function updateTask(taskId: string, input: unknown) {
       },
     });
 
-    clearTenantContext();
     return { success: true, task };
   } catch (error: unknown) {
-    clearTenantContext();
     console.error("Update task error:", error);
     const msg = error instanceof Error ? error.message : "Failed to update task";
     return { error: msg };
+  } finally {
+    clearTenantContext();
   }
 }
 
@@ -185,7 +200,6 @@ export async function deleteTask(taskId: string) {
     });
 
     if (!existingTask || existingTask.tenantId !== tenantId) {
-      clearTenantContext();
       return { error: "Task not found" };
     }
 
@@ -210,19 +224,20 @@ export async function deleteTask(taskId: string) {
     await db.taskActivity.create({
       data: {
         tenantId,
+        taskId,
         action: "deleted",
         userId,
         details: JSON.stringify({ title: existingTask.title }),
       },
     });
 
-    clearTenantContext();
     return { success: true };
   } catch (error: unknown) {
-    clearTenantContext();
     console.error("Delete task error:", error);
     const msg = error instanceof Error ? error.message : "Failed to delete task";
     return { error: msg };
+  } finally {
+    clearTenantContext();
   }
 }
 
@@ -247,7 +262,6 @@ export async function toggleTaskCompletion(taskId: string) {
     });
 
     if (!existingTask || existingTask.tenantId !== tenantId) {
-      clearTenantContext();
       return { error: "Task not found" };
     }
 
@@ -267,12 +281,12 @@ export async function toggleTaskCompletion(taskId: string) {
       },
     });
 
-    clearTenantContext();
     return { success: true, task };
   } catch (error: unknown) {
-    clearTenantContext();
     console.error("Toggle task completion error:", error);
     const msg = error instanceof Error ? error.message : "Failed to update task";
     return { error: msg };
+  } finally {
+    clearTenantContext();
   }
 }
