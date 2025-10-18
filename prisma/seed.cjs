@@ -1,8 +1,9 @@
-import { PrismaClient } from "@prisma/client";
-import { hash } from "bcryptjs";
-import { withAccelerate } from '@prisma/extension-accelerate'
+// CommonJS seed script for Prisma
+const { PrismaClient } = require("@prisma/client");
+const { hash } = require("bcryptjs");
+const { withAccelerate } = require('@prisma/extension-accelerate');
 
-const prisma = new PrismaClient().$extends(withAccelerate())
+const prisma = new PrismaClient().$extends(withAccelerate());
 
 async function seed() {
   console.log("🌱 Seeding database...");
@@ -66,7 +67,7 @@ async function seed() {
 
     console.log(`✅ Usage counter created`);
 
-        // Create some demo tasks
+    // Create some demo tasks
     await prisma.task.create({
       data: {
         tenantId: tenant.id,
