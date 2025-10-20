@@ -56,16 +56,17 @@ export const authConfig = {
           where: { userId: user.id },
           include: { tenant: true },
           orderBy: [
-            { role: 'asc' }, // owner < admin < member
             { createdAt: 'asc' }
           ]
         });
         
-        // Get the highest role (owner > admin > member)
-        const roleOrder = { owner: 1, admin: 2, member: 3 };
-        const primaryMembership = memberships.sort((a, b) => 
-          roleOrder[a.role] - roleOrder[b.role]
-        )[0];
+        // Get the highest role (admin > owner > member)
+        // Admin is platform-level, should be primary
+        const roleOrder = { admin: 1, owner: 2, member: 3 };
+        const sortedMemberships = [...memberships].sort((a, b) => 
+          roleOrder[a.role as keyof typeof roleOrder] - roleOrder[b.role as keyof typeof roleOrder]
+        );
+        const primaryMembership = sortedMemberships[0];
         
         token.role = primaryMembership?.role || 'member';
         token.tenantId = primaryMembership?.tenantId;

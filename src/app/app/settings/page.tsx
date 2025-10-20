@@ -1,46 +1,95 @@
 "use client";
 
-export default function SettingsPage() {
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { BillingManagement } from "@/components/BillingManagement";
+import { getTenantInfo } from "@/app/actions/tenant";
+
+function SettingsContent() {
+  const searchParams = useSearchParams();
+  const [tenantInfo, setTenantInfo] = useState<{
+    id: string;
+    name: string;
+    plan: "free" | "premium" | "premium_plus";
+    hasStripeSubscription: boolean;
+  } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showCanceled, setShowCanceled] = useState(false);
+
+  useEffect(() => {
+    // Check for success/canceled query params
+    if (searchParams?.get("success") === "true") {
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 5000);
+    }
+    if (searchParams?.get("canceled") === "true") {
+      setShowCanceled(true);
+      setTimeout(() => setShowCanceled(false), 5000);
+    }
+
+    // Load tenant info
+    loadTenantInfo();
+  }, [searchParams]);
+
+  const loadTenantInfo = async () => {
+    try {
+      const result = await getTenantInfo();
+      if (result.success && result.tenant) {
+        setTenantInfo({
+          id: result.tenant.id,
+          name: result.tenant.name,
+          plan: result.tenant.plan as "free" | "premium" | "premium_plus",
+          hasStripeSubscription: !!result.tenant.stripeSubscriptionId,
+        });
+      }
+    } catch (error) {
+      console.error("Failed to load tenant info:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="text-center py-8">Loading settings...</div>;
+  }
+
+  if (!tenantInfo) {
+    return <div className="text-center py-8 text-red-600">Failed to load tenant information</div>;
+  }
+
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-bold">Settings</h1>
-
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-lg font-semibold mb-4">Workspace Settings</h2>
-        <p className="text-gray-600 mb-6">Manage your workspace and billing settings</p>
-
-        <div className="space-y-4">
-          <div>
-            <h3 className="font-medium text-gray-900">Plan Information</h3>
-            <p className="text-sm text-gray-600 mt-1">
-              View and manage your current plan. Upgrade to unlock more features.
-            </p>
-            <button className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-              Manage Billing
-            </button>
-          </div>
-
-          <div className="pt-4 border-t border-gray-200">
-            <h3 className="font-medium text-gray-900">Workspace Members</h3>
-            <p className="text-sm text-gray-600 mt-1">
-              Manage team members and their permissions
-            </p>
-            <button className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-              Manage Members
-            </button>
-          </div>
-
-          <div className="pt-4 border-t border-gray-200">
-            <h3 className="font-medium text-gray-900">Advanced</h3>
-            <p className="text-sm text-gray-600 mt-1">
-              Danger zone - advanced workspace operations
-            </p>
-            <button className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-              Delete Workspace
-            </button>
-          </div>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold">Settings</h1>
+        <p className="text-gray-600 mt-2">Manage your workspace, billing, and preferences</p>
       </div>
+
+      {showSuccess && (
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
+          ✓ Subscription updated successfully!
+        </div>
+      )}
+
+      {showCanceled && (
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded">
+          Checkout was canceled. No charges were made.
+        </div>
+      )}
+
+      <BillingManagement
+        currentPlan={tenantInfo.plan}
+        tenantId={tenantInfo.id}
+        hasStripeSubscription={tenantInfo.hasStripeSubscription}
+      />
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<div className="text-center py-8">Loading settings...</div>}>
+      <SettingsContent />
+    </Suspense>
   );
 }

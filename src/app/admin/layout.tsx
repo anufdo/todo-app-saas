@@ -15,8 +15,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     router.push("/auth/signin");
   };
 
-  // Check if user is admin or owner
-  const isAdmin = session?.user?.role === "admin" || session?.user?.role === "owner";
+  // Check if user is admin (platform-level admin only, not tenant owner)
+  const isAdmin = session?.user?.role === "admin";
 
   if (!isAdmin) {
     return (
@@ -60,10 +60,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </Link>
               </div>
             </div>
-            <div className="flex items-center">
-              <span className="text-sm text-gray-600 mr-4">
-                {session?.user?.email} ({session?.user?.role})
-              </span>
+            <div className="flex items-center gap-4">
+              {session?.user && (
+                <div className="text-sm">
+                  <span className="font-medium text-gray-700">{session.user.name || session.user.email}</span>
+                  {session.user.role && (
+                    <span className="ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-semibold">
+                      {session.user.role.toUpperCase()}
+                    </span>
+                  )}
+                </div>
+              )}
               <button
                 onClick={handleSignOut}
                 className="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900"

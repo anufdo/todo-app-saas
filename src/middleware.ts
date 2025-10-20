@@ -61,12 +61,13 @@ export async function middleware(request: NextRequest) {
   const userId = token?.sub;
   const userRole = token?.role as string | undefined;
 
-  // Protect admin routes - only allow admin or owner
+  // Protect admin routes - only allow admin role (platform-level admin)
   if (pathname.startsWith("/admin")) {
     if (!userId) {
       return NextResponse.redirect(new URL("/auth/signin", request.url));
     }
-    if (userRole !== "admin" && userRole !== "owner") {
+    // Only users with "admin" role can access platform admin panel
+    if (userRole !== "admin") {
       return NextResponse.redirect(new URL("/app/tasks", request.url));
     }
   }

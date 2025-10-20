@@ -10,8 +10,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
 
   const isTasksPage = pathname?.includes("/app/tasks");
+  const isTeamsPage = pathname?.includes("/app/teams");
   const isSettingsPage = pathname?.includes("/app/settings");
-  const isAdmin = session?.user?.role === "admin" || session?.user?.role === "owner";
+  // Only show admin link for platform admins (not tenant owners)
+  const isAdmin = session?.user?.role === "admin";
 
   const handleSignOut = async () => {
     // TODO: Sign out user
@@ -39,6 +41,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   Tasks
                 </Link>
                 <Link
+                  href="/app/teams"
+                  className={`px-3 py-2 rounded-md text-sm font-medium ${
+                    isTeamsPage
+                      ? "bg-blue-100 text-blue-800"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  Teams
+                </Link>
+                <Link
                   href="/app/settings"
                   className={`px-3 py-2 rounded-md text-sm font-medium ${
                     isSettingsPage
@@ -58,7 +70,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 )}
               </div>
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center gap-4">
+              {session?.user && (
+                <div className="text-sm text-gray-700">
+                  <span className="font-medium">{session.user.name || session.user.email}</span>
+                  {session.user.role && (
+                    <span className="ml-2 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+                      {session.user.role}
+                    </span>
+                  )}
+                </div>
+              )}
               <button
                 onClick={handleSignOut}
                 className="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900"

@@ -12,16 +12,16 @@ export async function getAllTenants() {
       return { error: "Not authenticated" };
     }
 
-    // Check if user is admin or owner
+    // Check if user has platform admin role (not just tenant owner/admin)
     const membership = await db.membership.findFirst({
       where: {
         userId: session.user.id,
-        role: { in: ["admin", "owner"] }
+        role: "admin" // Only platform admins
       }
     });
 
     if (!membership) {
-      return { error: "Not authorized" };
+      return { error: "Not authorized - Platform admin access required" };
     }
 
     const tenants = await db.tenant.findMany({
@@ -55,16 +55,16 @@ export async function updateTenantPlan(tenantId: string, plan: "free" | "premium
       return { error: "Not authenticated" };
     }
 
-    // Check if user is admin or owner
+    // Check if user has platform admin role
     const membership = await db.membership.findFirst({
       where: {
         userId: session.user.id,
-        role: { in: ["admin", "owner"] }
+        role: "admin"
       }
     });
 
     if (!membership) {
-      return { error: "Not authorized" };
+      return { error: "Not authorized - Platform admin access required" };
     }
 
     const tenant = await db.tenant.update({
@@ -88,16 +88,16 @@ export async function updateTenantStatus(tenantId: string, status: string) {
       return { error: "Not authenticated" };
     }
 
-    // Check if user is admin or owner
+    // Check if user has platform admin role
     const membership = await db.membership.findFirst({
       where: {
         userId: session.user.id,
-        role: { in: ["admin", "owner"] }
+        role: "admin"
       }
     });
 
     if (!membership) {
-      return { error: "Not authorized" };
+      return { error: "Not authorized - Platform admin access required" };
     }
 
     const tenant = await db.tenant.update({
@@ -121,16 +121,16 @@ export async function deleteTenant(tenantId: string) {
       return { error: "Not authenticated" };
     }
 
-    // Check if user is owner (only owners can delete)
+    // Check if user has platform admin role (only platform admins can delete)
     const membership = await db.membership.findFirst({
       where: {
         userId: session.user.id,
-        role: "owner"
+        role: "admin"
       }
     });
 
     if (!membership) {
-      return { error: "Not authorized - only owners can delete tenants" };
+      return { error: "Not authorized - Only platform admins can delete tenants" };
     }
 
     await db.tenant.delete({

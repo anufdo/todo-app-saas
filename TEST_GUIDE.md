@@ -17,11 +17,12 @@ Your development server is running at: http://localhost:3000
 4. **Click the Admin link**
    - Should navigate to: http://localhost:3000/admin
    - You should see the tenant management interface
-   - You should see the "Demo Workspace" tenant with statistics
+   - You should see ALL tenants in the system
 5. **Test Admin Features:**
    - Try changing the plan (dropdown)
    - Try changing the status (dropdown)
    - Changes should persist and refresh the page
+   - Only platform admins can delete tenants
 
 ### 2. Test Regular User (No Admin Access)
 
@@ -32,10 +33,14 @@ Your development server is running at: http://localhost:3000
    - Password: `password123`
 4. **Expected Result:**
    - Should redirect to: http://localhost:3000/app/tasks?tenant=demo
-   - You should NOT see the 🛡️ Admin link
+   - You should NOT see the 🛡️ Admin link (even though user is "owner")
 5. **Try accessing admin panel directly:**
    - Navigate to: http://localhost:3000/admin
    - Should redirect back to /app/tasks (access denied)
+6. **Verify Role:**
+   - Demo user is "owner" of demo tenant
+   - Owner role = manage own tenant only
+   - Owner role ≠ platform admin access
 
 ### 3. Test Onboarding (No Repeated Onboarding Issue)
 
@@ -110,9 +115,11 @@ Your development server is running at: http://localhost:3000
 - Email: demo@example.com
 - Password: password123
 - Role: owner (of demo tenant)
-- Access: No admin panel access (even though owner, only admin role gets access)
+- Access: Can manage own tenant, NO admin panel access
 
-Note: To give demo user admin access, you would need to update their membership role in the database to 'admin'.
+**Important:** "owner" role = tenant owner (can manage their workspace)
+"admin" role = platform admin (can manage all tenants)
+These are different! Owners cannot access the platform admin panel.
 
 ## Verification Checklist
 
