@@ -22,21 +22,16 @@ export async function createTask(input: unknown) {
   try {
     const data = CreateTaskSchema.parse(input);
 
-    let usage = await db.usageCounter.findUnique({
-      where: { tenantId },
+    // Check current user's task count
+    const userTaskCount = await db.task.count({
+      where: { 
+        tenantId,
+        createdBy: userId,
+      },
     });
 
-    if (!usage) {
-      usage = await db.usageCounter.create({
-        data: {
-          tenantId,
-          taskCount: 0,
-        },
-      });
-    }
-
     const limit = getTasksLimit(plan);
-    if (limit > 0 && usage.taskCount >= limit) {
+    if (limit > 0 && userTaskCount >= limit) {
       return { error: `Task limit reached (${limit} tasks)` };
     }
 
@@ -53,9 +48,11 @@ export async function createTask(input: unknown) {
       },
     });
 
-    await db.usageCounter.update({
+    // Update tenant-wide usage counter for overall statistics
+    await db.usageCounter.upsert({
       where: { tenantId },
-      data: { taskCount: { increment: 1 } },
+      update: { taskCount: { increment: 1 } },
+      create: { tenantId, taskCount: 1 },
     });
 
     await db.taskActivity.create({
@@ -84,30 +81,30 @@ export async function createTask(input: unknown) {
 export async function getTasks() {
   const headersList = await headers();
   const tenantId = headersList.get("x-tenant-id");
+  const userId = headersList.get("x-user-id");
   const plan = (headersList.get("x-plan") || "free") as Plan;
 
-  if (!tenantId) {
+  if (!tenantId || !userId) {
     return { error: "Not authorized" };
   }
 
   setTenantContext(tenantId);
 
   try {
-    const [tasks, usage] = await Promise.all([
-      db.task.findMany({
-        where: { tenantId },
-        include: {
-          creator: { select: { id: true, name: true, email: true } },
-          team: { select: { id: true, name: true } },
-        },
-        orderBy: { createdAt: "desc" },
-      }),
-      db.usageCounter.findUnique({
-        where: { tenantId },
-      }),
-    ]);
+    const tasks = await db.task.findMany({
+      where: { 
+        tenantId,
+        createdBy: userId, // Only show tasks created by current user
+      },
+      include: {
+        creator: { select: { id: true, name: true, email: true } },
+        team: { select: { id: true, name: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    });
 
-    const taskCount = usage?.taskCount ?? 0;
+    // Count only the current user's tasks
+    const taskCount = tasks.length;
     const taskLimit = getTasksLimit(plan);
 
     return {
