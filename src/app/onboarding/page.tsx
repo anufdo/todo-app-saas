@@ -37,7 +37,7 @@ export default function OnboardingPage() {
           window.location.href = newUrl;
         }
       }
-    } catch (err: unknown) {
+    } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to create workspace";
       setError(msg);
     } finally {

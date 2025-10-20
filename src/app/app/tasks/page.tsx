@@ -58,7 +58,7 @@ export default function TasksPage() {
           setTaskLimit(0);
         }
       }
-    } catch (err: unknown) {
+    } catch {
       setError("Failed to load tasks");
     } finally {
       setLoading(false);
@@ -90,7 +90,7 @@ export default function TasksPage() {
         setTimeout(() => setSuccess(""), 3000);
         loadTasks();
       }
-    } catch (err: unknown) {
+    } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to create task";
       setError(msg);
     }
@@ -106,7 +106,7 @@ export default function TasksPage() {
       } else {
         loadTasks();
       }
-    } catch (err: unknown) {
+    } catch {
       setError("Failed to delete task");
     }
   };
@@ -119,7 +119,7 @@ export default function TasksPage() {
       } else {
         loadTasks();
       }
-    } catch (err: unknown) {
+    } catch {
       setError("Failed to update task");
     }
   };

@@ -37,7 +37,7 @@ export function UpgradeCta({ plan, taskCount, taskLimit }: UpgradeCtaProps) {
       </div>
       {taskCount >= taskLimit && (
         <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded text-red-800 text-sm">
-          You've reached your task limit. Upgrade to create more tasks.
+          You&apos;ve reached your task limit. Upgrade to create more tasks.
         </div>
       )}
     </div>

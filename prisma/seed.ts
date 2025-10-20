@@ -36,6 +36,20 @@ async function seed() {
 
     console.log(`✅ User created: ${user.email}`);
 
+    // Create admin user
+    const adminPassword = await hash("admin123!", 12);
+    const adminUser = await prisma.user.upsert({
+      where: { email: "admin@example.com" },
+      update: {},
+      create: {
+        email: "admin@example.com",
+        name: "Admin User",
+        password: adminPassword,
+      },
+    });
+
+    console.log(`✅ Admin user created: ${adminUser.email}`);
+
     // Create membership (user is owner of tenant)
     await prisma.membership.upsert({
       where: {
@@ -53,6 +67,26 @@ async function seed() {
     });
 
     console.log(`✅ Membership created`);
+
+    // Ensure admin user has admin role on demo tenant
+    await prisma.membership.upsert({
+      where: {
+        userId_tenantId: {
+          userId: adminUser.id,
+          tenantId: tenant.id,
+        },
+      },
+      update: {
+        role: "admin",
+      },
+      create: {
+        userId: adminUser.id,
+        tenantId: tenant.id,
+        role: "admin",
+      },
+    });
+
+    console.log(`✅ Admin membership created`);
 
     // Create usage counter
     await prisma.usageCounter.upsert({

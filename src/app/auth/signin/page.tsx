@@ -31,9 +31,29 @@ export default function SignInPage() {
       if (result?.error) {
         setError(result.error || "Failed to sign in");
       } else if (result?.ok) {
-        router.push("/onboarding");
+        // Fetch the session to check if user has a tenant
+        const response = await fetch('/api/auth/session');
+        const session = await response.json();
+        
+        if (session?.user?.hasTenant && session?.user?.subdomain) {
+          // User has a tenant, redirect to their workspace
+          const isLocalhost = window.location.hostname === "localhost" || 
+                             window.location.hostname === "127.0.0.1";
+          
+          if (isLocalhost) {
+            window.location.href = `/app/tasks?tenant=${session.user.subdomain}`;
+          } else {
+            const protocol = window.location.protocol;
+            const parts = window.location.host.split('.');
+            const domain = parts.length > 1 ? parts.slice(-2).join('.') : window.location.host;
+            window.location.href = `${protocol}//${session.user.subdomain}.${domain}/app/tasks`;
+          }
+        } else {
+          // User doesn't have a tenant, redirect to onboarding
+          router.push("/onboarding");
+        }
       }
-    } catch (err: unknown) {
+    } catch {
       setError("An unexpected error occurred");
     } finally {
       setLoading(false);
@@ -96,9 +116,17 @@ export default function SignInPage() {
           </CardContent>
           <CardFooter className="flex flex-col items-center">
             <p className="text-center text-gray-600 text-sm mb-3">Demo Credentials</p>
-            <div className="bg-gray-50 p-3 rounded text-sm text-gray-700 space-y-1">
-              <p>Email: <code className="font-mono">demo@example.com</code></p>
-              <p>Password: <code className="font-mono">password123</code></p>
+            <div className="bg-gray-50 p-3 rounded text-sm text-gray-700 space-y-2">
+              <div>
+                <p className="font-semibold">Regular User:</p>
+                <p>Email: <code className="font-mono">demo@example.com</code></p>
+                <p>Password: <code className="font-mono">password123</code></p>
+              </div>
+              <div className="pt-2 border-t">
+                <p className="font-semibold">Admin User:</p>
+                <p>Email: <code className="font-mono">admin@example.com</code></p>
+                <p>Password: <code className="font-mono">admin123!</code></p>
+              </div>
             </div>
           </CardFooter>
         </Card>

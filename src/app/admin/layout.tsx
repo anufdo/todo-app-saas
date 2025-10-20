@@ -4,19 +4,33 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session } = useSession();
 
-  const isTasksPage = pathname?.includes("/app/tasks");
-  const isSettingsPage = pathname?.includes("/app/settings");
-  const isAdmin = session?.user?.role === "admin" || session?.user?.role === "owner";
+  const isAdminHome = pathname === "/admin";
 
   const handleSignOut = async () => {
-    // TODO: Sign out user
     router.push("/auth/signin");
   };
+
+  // Check if user is admin or owner
+  const isAdmin = session?.user?.role === "admin" || session?.user?.role === "owner";
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-md text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
+          <p className="text-gray-600 mb-4">You don&apos;t have permission to access the admin panel.</p>
+          <Link href="/app/tasks" className="text-blue-600 hover:underline">
+            Go to Tasks
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -24,41 +38,32 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <Link href="/app/tasks" className="font-bold text-lg">
-                Todo SaaS
+              <Link href="/admin" className="font-bold text-lg">
+                🛡️ Admin Panel
               </Link>
               <div className="ml-10 flex space-x-4">
                 <Link
-                  href="/app/tasks"
+                  href="/admin"
                   className={`px-3 py-2 rounded-md text-sm font-medium ${
-                    isTasksPage
+                    isAdminHome
                       ? "bg-blue-100 text-blue-800"
                       : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
-                  Tasks
+                  Tenants
                 </Link>
                 <Link
-                  href="/app/settings"
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${
-                    isSettingsPage
-                      ? "bg-blue-100 text-blue-800"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
+                  href="/app/tasks"
+                  className="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900"
                 >
-                  Settings
+                  Back to App
                 </Link>
-                {isAdmin && (
-                  <Link
-                    href="/admin"
-                    className="px-3 py-2 rounded-md text-sm font-medium text-purple-600 hover:text-purple-800 hover:bg-purple-50"
-                  >
-                    🛡️ Admin
-                  </Link>
-                )}
               </div>
             </div>
             <div className="flex items-center">
+              <span className="text-sm text-gray-600 mr-4">
+                {session?.user?.email} ({session?.user?.role})
+              </span>
               <button
                 onClick={handleSignOut}
                 className="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900"

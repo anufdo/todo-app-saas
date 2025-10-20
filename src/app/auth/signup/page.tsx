@@ -38,7 +38,7 @@ export default function SignUpPage() {
       } else {
         router.push("/auth/signin");
       }
-    } catch (err: unknown) {
+    } catch {
       setError("An unexpected error occurred");
     } finally {
       setLoading(false);

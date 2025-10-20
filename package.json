@@ -9,7 +9,9 @@
     "lint": "next lint",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
-   "db:seed": "node prisma/seed.cjs",
+    "db:reset": "prisma migrate reset --force --skip-generate --skip-seed",
+    "db:seed": "node prisma/seed.cjs",
+    "db:reset:seed": "npm run db:reset && npm run db:seed",
     "test": "vitest",
     "test:e2e": "playwright test",
     "type-check": "tsc --noEmit"

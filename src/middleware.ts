@@ -59,6 +59,17 @@ export async function middleware(request: NextRequest) {
   // Attach user ID from NextAuth token
   const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
   const userId = token?.sub;
+  const userRole = token?.role as string | undefined;
+
+  // Protect admin routes - only allow admin or owner
+  if (pathname.startsWith("/admin")) {
+    if (!userId) {
+      return NextResponse.redirect(new URL("/auth/signin", request.url));
+    }
+    if (userRole !== "admin" && userRole !== "owner") {
+      return NextResponse.redirect(new URL("/app/tasks", request.url));
+    }
+  }
 
   // If no subdomain, redirect to auth/signin or home
   if (!subdomain) {
