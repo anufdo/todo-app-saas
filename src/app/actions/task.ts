@@ -203,6 +203,17 @@ export async function deleteTask(taskId: string) {
       return { error: "Task not found" };
     }
 
+    // Log activity BEFORE deleting task
+    await db.taskActivity.create({
+      data: {
+        tenantId,
+        taskId,
+        action: "deleted",
+        userId,
+        details: JSON.stringify({ title: existingTask.title }),
+      },
+    });
+
     // Delete task
     await db.task.delete({
       where: { id: taskId },
@@ -219,17 +230,6 @@ export async function deleteTask(taskId: string) {
         data: { taskCount: { decrement: 1 } },
       });
     }
-
-    // Log activity
-    await db.taskActivity.create({
-      data: {
-        tenantId,
-        taskId,
-        action: "deleted",
-        userId,
-        details: JSON.stringify({ title: existingTask.title }),
-      },
-    });
 
     return { success: true };
   } catch (error: unknown) {
