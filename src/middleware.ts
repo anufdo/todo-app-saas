@@ -70,11 +70,13 @@ export async function middleware(request: NextRequest) {
     if (userRole !== "admin") {
       return NextResponse.redirect(new URL("/app/tasks", request.url));
     }
+    // Admin panel doesn't require tenant context - allow access
+    return NextResponse.next();
   }
 
   // If no subdomain, redirect to auth/signin or home
   if (!subdomain) {
-    if (pathname.startsWith("/app") || pathname.startsWith("/admin")) {
+    if (pathname.startsWith("/app")) {
       return NextResponse.redirect(new URL("/auth/signin", request.url));
     }
     return NextResponse.next();

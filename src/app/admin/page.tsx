@@ -89,7 +89,7 @@ export default function AdminPage() {
     <div>
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Tenant Management</h1>
-        <p className="text-gray-600 mt-2">Manage all tenants, plans, and usage</p>
+        <p className="text-gray-600 mt-2">Manage all tenants, plans, and usage. Visit the &ldquo;All Users&rdquo; tab to manage users across all tenants.</p>
       </div>
 
       <div className="grid gap-6">

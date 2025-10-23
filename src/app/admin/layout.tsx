@@ -9,7 +9,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const { data: session } = useSession();
 
-  const isAdminHome = pathname === "/admin";
+  const isTenantsPage = pathname === "/admin/tenants" || pathname === "/admin";
+  const isUsersPage = pathname === "/admin/users";
 
   const handleSignOut = async () => {
     router.push("/auth/signin");
@@ -45,19 +46,31 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <Link
                   href="/admin"
                   className={`px-3 py-2 rounded-md text-sm font-medium ${
-                    isAdminHome
-                      ? "bg-blue-100 text-blue-800"
+                    isTenantsPage
+                      ? "bg-purple-100 text-purple-800"
                       : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
                   Tenants
                 </Link>
                 <Link
-                  href="/app/tasks"
-                  className="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900"
+                  href="/admin/users"
+                  className={`px-3 py-2 rounded-md text-sm font-medium ${
+                    isUsersPage
+                      ? "bg-purple-100 text-purple-800"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
                 >
-                  Back to App
+                  All Users
                 </Link>
+                {session?.user?.subdomain && (
+                  <Link
+                    href="/app/tasks"
+                    className="px-3 py-2 rounded-md text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                  >
+                    My Tenant
+                  </Link>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -67,6 +80,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   {session.user.role && (
                     <span className="ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-semibold">
                       {session.user.role.toUpperCase()}
+                    </span>
+                  )}
+                  {session.user.subdomain && (
+                    <span className="ml-2 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+                      {session.user.subdomain}
                     </span>
                   )}
                 </div>

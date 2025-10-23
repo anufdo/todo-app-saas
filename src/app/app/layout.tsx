@@ -15,6 +15,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   // Only show admin link for platform admins (not tenant owners)
   const isAdmin = session?.user?.role === "admin";
 
+  // Debug logging
+  if (typeof window !== 'undefined') {
+    console.log('🔍 Session Debug:', {
+      email: session?.user?.email,
+      role: session?.user?.role,
+      isAdmin,
+      shouldShowAdminMenu: isAdmin
+    });
+  }
+
   const handleSignOut = async () => {
     // TODO: Sign out user
     router.push("/auth/signin");
@@ -61,12 +71,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   Settings
                 </Link>
                 {isAdmin && (
-                  <Link
-                    href="/admin"
-                    className="px-3 py-2 rounded-md text-sm font-medium text-purple-600 hover:text-purple-800 hover:bg-purple-50"
-                  >
-                    🛡️ Admin
-                  </Link>
+                  <>
+                    <Link
+                      href="/admin"
+                      className="px-3 py-2 rounded-md text-sm font-medium bg-purple-100 text-purple-700 hover:bg-purple-200 font-semibold"
+                    >
+                      🛡️ Admin Panel
+                    </Link>
+                    <Link
+                      href="/admin/users"
+                      className="px-3 py-2 rounded-md text-sm font-medium text-purple-600 hover:text-purple-800 hover:bg-purple-50"
+                    >
+                      All Users
+                    </Link>
+                  </>
                 )}
               </div>
             </div>
@@ -75,7 +93,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <div className="text-sm text-gray-700">
                   <span className="font-medium">{session.user.name || session.user.email}</span>
                   {session.user.role && (
-                    <span className="ml-2 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+                    <span className={`ml-2 text-xs px-2 py-1 rounded-full font-semibold ${
+                      session.user.role === 'admin' 
+                        ? 'bg-purple-100 text-purple-700' 
+                        : session.user.role === 'owner'
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'bg-gray-100 text-gray-600'
+                    }`}>
                       {session.user.role}
                     </span>
                   )}
